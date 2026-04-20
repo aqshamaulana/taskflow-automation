@@ -16,6 +16,12 @@ class TaskPage:
     BTN_SUBMIT = (By.CSS_SELECTOR, "button[type='submit']")
     BTN_RESET = (By.ID, "resetForm")
     
+    EDIT_TITLE = (By.ID, "editTitle")
+    EDIT_DESCRIPTION = (By.ID, "editDescription")
+    EDIT_STATUS = (By.ID, "editStatus")
+    BTN_SAVE_CHANGES = (By.ID, "btnSaveEdit") # Seringkali ID-nya 'saveEdit' atau 'btnSaveEdit'
+    ALERT_SUCCESS = (By.CLASS_NAME, "alert-success")
+    
     # Tabel tugas
     TASKS_TABLE = (By.CSS_SELECTOR, ".table")
     TASKS_TABLE_BODY = (By.CSS_SELECTOR, ".table tbody")
