@@ -1,0 +1,52 @@
+[
+  {
+    "name": "TC-DDT-01: Valid - Semua field terisi lengkap",
+    "payload": {"title": "Belajar Python", "description": "Mengerjakan Challenge 3", "status": "pending"},
+    "expected_status": 201
+  },
+  {
+    "name": "TC-DDT-02: Valid - Hanya mengirim title (status default)",
+    "payload": {"title": "Beli Kopi"},
+    "expected_status": 201
+  },
+  {
+    "name": "TC-DDT-03: Valid - Tanpa deskripsi",
+    "payload": {"title": "Tugas Tanpa Deskripsi", "status": "in-progress"},
+    "expected_status": 201
+  },
+  {
+    "name": "TC-DDT-04: Valid - Status in-progress",
+    "payload": {"title": "Tugas Sedang Berjalan", "description": "Lagi dikerjain nih", "status": "in-progress"},
+    "expected_status": 201
+  },
+  {
+    "name": "TC-DDT-05: Valid - Status completed",
+    "payload": {"title": "Tugas Selesai", "description": "Sudah beres", "status": "completed"},
+    "expected_status": 201
+  },
+  {
+    "name": "TC-DDT-06: Invalid - Payload kosong sama sekali",
+    "payload": {},
+    "expected_status": 422
+  },
+  {
+    "name": "TC-DDT-07: Invalid - Title tidak dikirim (hanya deskripsi)",
+    "payload": {"description": "Ini deskripsi tapi lupa judul"},
+    "expected_status": 422
+  },
+  {
+    "name": "TC-DDT-08: Invalid - Title bernilai Null",
+    "payload": {"title": null},
+    "expected_status": 422
+  },
+  {
+    "name": "TC-DDT-09: Invalid - Tipe data title salah (berupa dictionary/object)",
+    "payload": {"title": {"nama": "format salah"}},
+    "expected_status": 422
+  },
+  {
+    "name": "TC-DDT-10: Invalid - Tipe data status salah (berupa array)",
+    "payload": {"title": "Tugas Error", "status": ["pending"]},
+    "expected_status": 422
+  }
+]
