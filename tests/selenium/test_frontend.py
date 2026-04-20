@@ -40,21 +40,41 @@ class TestTaskFlowFrontend:
     
     @pytest.fixture(autouse=True)
     def setup(self, driver):
-        """Setup sebelum setiap test"""
+        """Setup sebelum setiap test (Versi Sapu Bersih)"""
         self.page = TaskPage(driver)
         self.driver = driver
 
-        # FIX: Tutup modal jika masih terbuka dari test sebelumnya
-        try:
-            modal = driver.find_element(*self.page.MODAL_EDIT)
-            if modal.is_displayed():
-                modal.send_keys(Keys.ESCAPE)
-                time.sleep(1)  # Tunggu animasi Bootstrap selesai
-        except Exception:
-            pass  # Modal tidak ada, lanjut normal
+        # 1. Buka ulang URL awal (hard reload)
+        self.driver.get("http://127.0.0.1:8081")
+        time.sleep(1)
 
-        # Refresh halaman untuk memastikan state bersih
-        self.page.refresh_tasks()
+        # 2. Paksa tutup semua alert system (jika ada yang nyangkut)
+        try:
+            alert = self.driver.switch_to.alert
+            alert.dismiss()
+        except:
+            pass
+
+        # 3. Paksa hapus modal backdrop (layar gelap) lewat JavaScript
+        self.driver.execute_script("""
+            var backdrops = document.querySelectorAll('.modal-backdrop');
+            backdrops.forEach(b => b.remove());
+            document.body.classList.remove('modal-open');
+            document.body.style = '';
+            
+            // Tutup alert UI bootstrap
+            var alerts = document.querySelectorAll('.alert');
+            alerts.forEach(a => a.remove());
+        """)
+
+        # 4. Refresh data task
+        try:
+            self.page.refresh_tasks()
+        except:
+            # Jika tombol refresh gagal diklik, abaikan karena barusan di hard-reload
+            pass
+        
+        time.sleep(1)
     
     # ========== Test Cases ==========
     
@@ -113,6 +133,8 @@ class TestTaskFlowFrontend:
         # Arrange - Buat tugas dulu
         original_title = f"Edit Test {time.time()}"
         self.page.create_task(original_title, "Deskripsi awal", "pending")
+        
+        time.sleep(1)
         
         # Act - Edit tugas
         self.page.click_edit_task(original_title)
@@ -270,3 +292,46 @@ class TestTaskFlowFrontend:
         self.driver.find_element(*self.page.BTN_SUBMIT).click()
         # Jika tidak ada exception, berarti validasi tidak muncul lagi
         print("✓ Validasi form di-reset dengan benar")
+        
+    def test_search_and_filter_challenge_2(self):
+        """TC-CH2: Memverifikasi fitur pencarian dan filter status berfungsi"""
+        # --- Arrange: Buat data ---
+        unique_prefix = f"Ch2_{int(time.time())}"
+        task1 = f"{unique_prefix} Belajar Pytest"
+        task2 = f"{unique_prefix} Laporan Akhir"
+        
+        self.page.create_task(task1, "Fokus ke Selenium", "pending")
+        time.sleep(1)
+        self.page.create_task(task2, "Laporan akhir bulan", "completed")
+        time.sleep(1.5) # Tunggu lebih lama
+
+        # --- Act & Assert 1: Test Fitur Search ---
+        search_input = self.driver.find_element(By.ID, "searchInput")
+        search_input.clear()
+        
+        # Ketik satu-satu pelan-pelan agar JavaScript sadar
+        for char in "Pytest":
+            search_input.send_keys(char)
+            time.sleep(0.1)
+            
+        time.sleep(2) # Beri waktu 2 detik untuk API merespon
+        
+        # Pastikan tabel sudah terfilter
+        assert self.page.task_exists(task1), "Tugas 1 harusnya terlihat saat dicari"
+        assert not self.page.task_exists(task2), "Tugas 2 harusnya tidak terlihat"
+        print("  ✓ Fitur pencarian teks berfungsi")
+        
+        # --- Act & Assert 2: Test Fitur Filter ---
+        search_input.clear()
+        search_input.send_keys(" ")
+        search_input.send_keys(Keys.BACKSPACE)
+        time.sleep(2) # Tunggu tabel kembali ke awal
+        
+        from selenium.webdriver.support.ui import Select
+        filter_dropdown = Select(self.driver.find_element(By.ID, "filterStatus"))
+        filter_dropdown.select_by_value("completed")
+        time.sleep(2) # Tunggu tabel terfilter
+        
+        assert not self.page.task_exists(task1), "Tugas pending harusnya disembunyikan"
+        assert self.page.task_exists(task2), "Tugas completed harusnya terlihat"
+        print("  ✓ Fitur filter dropdown berfungsi")

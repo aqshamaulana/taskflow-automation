@@ -2,7 +2,7 @@
 from fastapi import FastAPI, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from typing import Optional, List
+from typing import List, Optional
 import sqlite3
 import json
 from datetime import datetime
@@ -91,11 +91,33 @@ async def create_task(task: TaskCreate):
     return new_task
 
 @app.get("/api/tasks", response_model=List[Task])
-async def get_all_tasks():
-    """Mendapatkan semua tugas"""
+async def get_all_tasks(search: Optional[str] = None, status: Optional[str] = None):
+    """Mendapatkan semua tugas (dengan fitur pencarian & filter)"""
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute("SELECT * FROM tasks ORDER BY id DESC")
+    
+    query = "SELECT * FROM tasks"
+    params = []
+    conditions = []
+    
+    # Jika ada filter status
+    if status:
+        conditions.append("status = ?")
+        params.append(status)
+        
+    # Jika ada parameter search
+    if search:
+        search_term = f"%{search}%"
+        conditions.append("(title LIKE ? OR description LIKE ?)")
+        params.extend([search_term, search_term])
+        
+    # Gabungkan query jika ada kondisi
+    if conditions:
+        query += " WHERE " + " AND ".join(conditions)
+        
+    query += " ORDER BY id DESC"
+    
+    cursor.execute(query, params)
     tasks = [dict(row) for row in cursor.fetchall()]
     conn.close()
     return tasks

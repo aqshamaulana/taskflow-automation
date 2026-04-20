@@ -22,7 +22,27 @@ document.addEventListener('DOMContentLoaded', function() {
 // ========== API Functions ==========
 async function fetchTasks() {
     try {
-        const response = await fetch(apiUrl(API_CONFIG.ENDPOINTS.TASKS));
+        // Ambil nilai dari filter
+        const searchInput = document.getElementById('searchInput');
+        const filterStatus = document.getElementById('filterStatus');
+        
+        let url = apiUrl(API_CONFIG.ENDPOINTS.TASKS);
+        
+        // Buat query parameters jika ada pencarian/filter
+        const params = new URLSearchParams();
+        if (searchInput && searchInput.value) {
+            params.append('search', searchInput.value);
+        }
+        if (filterStatus && filterStatus.value) {
+            params.append('status', filterStatus.value);
+        }
+        
+        // Gabungkan URL dengan parameter
+        if (params.toString()) {
+            url += `?${params.toString()}`;
+        }
+
+        const response = await fetch(url);
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
         return await response.json();
     } catch (error) {

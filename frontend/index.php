@@ -70,6 +70,25 @@
                     <i class="fas fa-sync-alt me-1"></i>Refresh
                 </button>
             </div>
+            
+            <div class="card-body border-bottom bg-light">
+                <div class="row g-2">
+                    <div class="col-md-8">
+                        <div class="input-group input-group-sm">
+                            <span class="input-group-text bg-white"><i class="fas fa-search text-muted"></i></span>
+                            <input type="text" id="searchInput" class="form-control" placeholder="Cari berdasarkan judul atau deskripsi..." onkeyup="loadTasks()">
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <select id="filterStatus" class="form-select form-select-sm" onchange="loadTasks()">
+                            <option value="">Semua Status</option>
+                            <option value="pending">Pending</option>
+                            <option value="in-progress">In Progress</option>
+                            <option value="completed">Completed</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
             <div class="card-body">
                 <div id="tasksList">
                     <!-- Data tugas akan dimuat di sini via JavaScript -->
