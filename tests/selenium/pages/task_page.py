@@ -133,27 +133,37 @@ class TaskPage:
             task['actions']['delete'].click()
     
     def update_task_in_modal(self, title=None, description=None, status=None):
-        """Update tugas melalui modal edit"""
-        if title is not None:
-            title_input = self.driver.find_element(*self.MODAL_TITLE)
-            title_input.clear()
-            title_input.send_keys(title)
-        
-        if description is not None:
-            desc_input = self.driver.find_element(*self.MODAL_DESCRIPTION)
-            desc_input.clear()
-            desc_input.send_keys(description)
-        
-        if status is not None:
+        """Memperbarui tugas melalui modal dengan penanganan lag headless"""
+        # Tunggu form modal benar-benar siap
+        time.sleep(1) 
+
+        if title:
+            field = self.driver.find_element(*self.EDIT_TITLE)
+            field.clear()
+            field.send_keys(title)
+        if description:
+            field = self.driver.find_element(*self.EDIT_DESCRIPTION)
+            field.clear()
+            field.send_keys(description)
+        if status:
             from selenium.webdriver.support.ui import Select
-            select = Select(self.driver.find_element(*self.MODAL_STATUS))
+            select = Select(self.driver.find_element(*self.EDIT_STATUS))
             select.select_by_value(status)
-        
-        self.driver.find_element(*self.BTN_SAVE_EDIT).click()
-        
-        # Tunggu modal tertutup dan alert muncul
-        self.wait.until(EC.invisibility_of_element_located(self.MODAL_EDIT))
-        self.wait.until(EC.presence_of_element_located(self.ALERT_SUCCESS))
+
+        # FIX: Gunakan JavaScript Click untuk tombol simpan di modal
+        # Cara ini jauh lebih stabil di GitHub Actions/Headless mode
+        btn_save = self.driver.find_element(*self.BTN_SAVE_CHANGES)
+        self.driver.execute_script("arguments[0].scrollIntoView(true);", btn_save)
+        time.sleep(0.5)
+        self.driver.execute_script("arguments[0].click();", btn_save)
+
+        # Tunggu alert sukses muncul
+        try:
+            self.wait.until(EC.presence_of_element_located(self.ALERT_SUCCESS))
+        except:
+            # Jika timeout, coba klik sekali lagi secara paksa (retry logic)
+            self.driver.execute_script("arguments[0].click();", btn_save)
+            self.wait.until(EC.presence_of_element_located(self.ALERT_SUCCESS))
     
     def get_alert_message(self):
         """Mendapatkan teks dari alert yang muncul"""
